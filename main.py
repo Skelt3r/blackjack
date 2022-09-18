@@ -82,6 +82,7 @@ class App:
         self.player_score_label['text'] = 'Player score: -'
         self.dealer_score_label['text'] = 'Dealer score: -'
         self.deal_button['text'] = 'Deal'
+        self.wager_label['text'] = f'Wager: ${self.game.player.bet}'
         self.hit_placer = 0.45
         self.game.stage = 'default'
         self.game.new_round()
@@ -89,68 +90,68 @@ class App:
 
 
     def configure_buttons(self):
-        if self.game.stage == 'default':
-            self.deal_button['text'] = 'Deal'
-            self.bet_button.configure(state='normal')
-            self.deal_button.configure(state='normal')
-            self.hit_button.configure(state='disabled')
-            self.stand_button.configure(state='disabled')
-            self.surrender_button.configure(state='disabled')
-        elif self.game.stage == 'player':
-            self.bet_button.configure(state='disabled')
-            self.deal_button.configure(state='disabled')
-            self.hit_button.configure(state='normal')
-            self.stand_button.configure(state='normal')
-            self.surrender_button.configure(state='normal')
-        elif self.game.stage == 'dealer':
-            self.bet_button.configure(state='disabled')
-            self.deal_button.configure(state='disabled')
-            self.hit_button.configure(state='disabled')
-            self.stand_button.configure(state='disabled')
-            self.surrender_button.configure(state='disabled')
-        elif self.game.stage == 'next':
-            self.deal_button['text'] = 'Next'
-            self.bet_button.configure(state='disabled')
-            self.deal_button.configure(state='normal')
-            self.hit_button.configure(state='disabled')
-            self.stand_button.configure(state='disabled')
-            self.surrender_button.configure(state='disabled')
+        match self.game.stage:
+            case 'default':
+                self.deal_button['text'] = 'Deal'
+                self.deal_button.configure(command=self.deal)
+                self.bet_button.configure(state='normal')
+                self.deal_button.configure(state='normal')
+                self.hit_button.configure(state='disabled')
+                self.stand_button.configure(state='disabled')
+                self.surrender_button.configure(state='disabled')
+            case 'player':
+                self.bet_button.configure(state='disabled')
+                self.deal_button.configure(state='disabled')
+                self.hit_button.configure(state='normal')
+                self.stand_button.configure(state='normal')
+                self.surrender_button.configure(state='normal')
+            case 'dealer':
+                self.bet_button.configure(state='disabled')
+                self.deal_button.configure(state='disabled')
+                self.hit_button.configure(state='disabled')
+                self.stand_button.configure(state='disabled')
+                self.surrender_button.configure(state='disabled')
+            case 'next':
+                self.deal_button['text'] = 'Next'
+                self.deal_button.configure(command=self.clear_board)
+                self.bet_button.configure(state='disabled')
+                self.deal_button.configure(state='normal')
+                self.hit_button.configure(state='disabled')
+                self.stand_button.configure(state='disabled')
+                self.surrender_button.configure(state='disabled')
 
 
     def deal(self):
-        if self.game.stage == 'next':
-            self.clear_board()
+        self.game.player.bet = int(self.wager_label['text'].split('$')[-1])
+        if self.game.player.bet <= 0:
+            messagebox.showerror('Wager not set', 'Wager must be greater than $0.')
         else:
-            self.game.player.bet = int(self.wager_label['text'].split('$')[-1])
-            if self.game.player.bet <= 0:
-                messagebox.showerror('Wager not set', 'Wager must be greater than $0.')
+            self.place_bet(self.game.player.bet)
+            
+            for card in self.player_cards:
+                self.draw_card_on_screen(card, self.game.player.cards[self.player_cards.index(card)])
+
+            self.draw_card_on_screen(self.dealer_card_label1, self.game.dealer.cards[0])
+            
+            if self.game.sum_values(self.game.player.cards) == 21:
+                self.draw_card_on_screen(self.dealer_card_label2, self.game.dealer.cards[1])
             else:
-                self.place_bet(self.game.player.bet)
-                
-                for card in self.player_cards:
-                    self.draw_card_on_screen(card, self.game.player.cards[self.player_cards.index(card)])
+                self.draw_card_on_screen(self.dealer_card_label2, 'b')
 
-                self.draw_card_on_screen(self.dealer_card_label1, self.game.dealer.cards[0])
-                
-                if self.game.sum_values(self.game.player.cards) == 21:
-                    self.draw_card_on_screen(self.dealer_card_label2, self.game.dealer.cards[1])
-                else:
-                    self.draw_card_on_screen(self.dealer_card_label2, 'b')
+            self.game.player.score = self.game.sum_values(self.game.player.cards)
+            self.player_score_label['text'] = f'Player score: {self.game.player.score}'
 
-                self.game.player.score = self.game.sum_values(self.game.player.cards)
-                self.player_score_label['text'] = f'Player score: {self.game.player.score}'
+            if self.game.player.score == self.game.dealer.score == 21:
+                self.game.draw = True
+                self.game.stage = 'next'
+            elif self.game.player.score > 21:
+                self.game.dealer.won = True
+                self.game.stage = 'next'
+            else:
+                self.game.stage = 'player'
 
-                if self.game.player.score == self.game.dealer.score == 21:
-                    self.game.draw = True
-                    self.game.stage = 'next'
-                elif self.game.player.score > 21:
-                    self.game.dealer.won = True
-                    self.game.stage = 'next'
-                else:
-                    self.game.stage = 'player'
-
-                self.update_banks()
-                self.configure_buttons()
+            self.update_banks()
+            self.configure_buttons()
 
     
     def hit(self):
@@ -252,10 +253,23 @@ class App:
 
 
     def reset(self):
-        self.game.__init__()
-        self.clear_board()
-        self.update_banks()
-        self.configure_buttons()
+        def ok():
+            self.game.__init__()
+            self.clear_board()
+            self.update_banks()
+            self.configure_buttons()
+            win.destroy()
+
+        win = Toplevel(self.root)
+        win.title('Reset')
+        win.attributes('-toolwindow', True)
+        win.resizable(0, 0)
+        
+        Label(win, text='Are you sure you want to reset the board?').grid(row=0, column=0, columnspan=2, padx=5, pady=5)
+        Button(win, text='Yes', command=ok, width=5).grid(row=1, column=0, sticky='e', padx=2, pady=5)
+        Button(win, text='No', command=win.destroy, width=5).grid(row=1, column=1, sticky='w', padx=2, pady=5)
+        
+        win.focus()
 
 
     def run(self):
