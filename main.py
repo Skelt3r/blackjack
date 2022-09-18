@@ -126,6 +126,7 @@ class App:
                 messagebox.showerror('Wager not set', 'Wager must be greater than $0.')
             else:
                 self.place_bet(self.game.player.bet)
+                
                 for card in self.player_cards:
                     self.draw_card_on_screen(card, self.game.player.cards[self.player_cards.index(card)])
 
@@ -207,6 +208,7 @@ class App:
             self.draw_card_on_screen(self.hit_card_label, self.game.dealer.cards[self.dealer_cards.index(self.hit_card_label)])
             self.dealer_score_label['text'] = f'Dealer score: {self.game.dealer.score}'
 
+        self.hit_placer = 0.45
         self.draw_card_on_screen(self.dealer_card_label2, self.game.dealer.cards[1])
         self.game.dealer.score = self.game.sum_values(self.game.dealer.cards)
 
@@ -233,9 +235,16 @@ class App:
                     else:
                         self.game.player.won = True
                     resolving = False
+
             if self.game.player.funds <= 0:
                 messagebox.showinfo('Bankrupt', 'Player went bankrupt! Start a new game.')
                 return
+            elif self.game.player.won:
+                messagebox.showinfo('Player won', 'Player won the round!')
+            elif self.game.dealer.won:
+                messagebox.showinfo('Dealer won', 'Dealer won the round!')
+            else:
+                messagebox.showinfo('Draw', 'The game is a draw.')
 
         self.game.stage = 'next'
         self.update_banks()
