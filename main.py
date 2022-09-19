@@ -1,6 +1,7 @@
 from components import CardFrame, GameButton
 from game import Blackjack
-from tkinter import Button, Entry, Frame, Label, messagebox, PhotoImage, Tk, Toplevel
+from PIL import Image, ImageTk
+from tkinter import Button, Entry, Frame, Label, messagebox, Tk, Toplevel
 from time import sleep
 
 
@@ -13,7 +14,9 @@ class App:
 
         
     def draw_card_on_screen(self, card, image, pause=True):
-        card.image = PhotoImage(file=f'./images/{image}.gif')
+        open_image = Image.open(f'./images/{image}.png')
+        open_image = open_image.resize((72, 95))
+        card.image = ImageTk.PhotoImage(open_image)
         card.configure(image=card.image)
         card.pack()
         if pause: sleep(0.1)
@@ -276,7 +279,7 @@ class App:
     def run(self):
         self.root = Tk()
         self.root.geometry('800x600')
-        self.root.iconphoto(True, PhotoImage(file="./images/j.gif"))
+        self.root.iconphoto(True, ImageTk.PhotoImage(file='./images/b.png'))
         self.root.title('Blackjack')
         self.root.resizable(0, 0)
 
