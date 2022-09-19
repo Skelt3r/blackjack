@@ -144,9 +144,11 @@ class App:
             if self.game.player.score == self.game.dealer.score == 21:
                 self.game.draw = True
                 self.game.stage = 'next'
+                messagebox.showinfo('Draw', 'The game is a draw.')
             elif self.game.player.score > 21:
                 self.game.dealer.won = True
                 self.game.stage = 'next'
+                messagebox.showinfo('Dealer won', 'Player busted! Dealer won the round!')
             else:
                 self.game.stage = 'player'
 
@@ -176,6 +178,7 @@ class App:
             self.deal_button['text'] = 'Next'
             self.game.dealer.won = True
             self.game.stage = 'next'
+            messagebox.showinfo('Dealer won', 'Player busted! Dealer won the round!')
             self.update_banks()
             self.configure_buttons()
 
@@ -216,12 +219,10 @@ class App:
         if self.game.dealer.score == 21:
             self.dealer_score_label['text'] = f'Dealer score: {self.game.dealer.score}'
             self.game.dealer.won = True
-
         else:
             resolving = True
             while resolving:
                 self.dealer_score_label['text'] = f'Dealer score: {self.game.dealer.score}'
-                
                 if self.game.dealer.score < self.game.player.score:
                     hit()
                 elif self.game.dealer.score == self.game.player.score:
@@ -231,21 +232,21 @@ class App:
                     elif self.game.player.score < 21:
                         hit()
                 elif self.game.dealer.score > self.game.player.score:
-                    if self.game.dealer.score < 21:
+                    if self.game.dealer.score <= 21:
                         self.game.dealer.won = True
                     else:
                         self.game.player.won = True
                     resolving = False
 
-            if self.game.player.funds <= 0:
-                messagebox.showinfo('Bankrupt', 'Player went bankrupt! Start a new game.')
-                return
-            elif self.game.player.won:
-                messagebox.showinfo('Player won', 'Player won the round!')
-            elif self.game.dealer.won:
-                messagebox.showinfo('Dealer won', 'Dealer won the round!')
-            else:
-                messagebox.showinfo('Draw', 'The game is a draw.')
+        if self.game.player.funds <= 0:
+            messagebox.showinfo('Bankrupt', 'Player went bankrupt! Start a new game.')
+            return
+        elif self.game.player.won:
+            messagebox.showinfo('Player won', 'Player won the round!')
+        elif self.game.dealer.won:
+            messagebox.showinfo('Dealer won', 'Dealer won the round!')
+        else:
+            messagebox.showinfo('Draw', 'The game is a draw.')
 
         self.game.stage = 'next'
         self.update_banks()
